@@ -14,6 +14,7 @@ import calendar
 import re
 
 # TODO:
+# check DEFAULT_GROUP_FILE for duplicate entries
 # add csv output
 
 ###
@@ -106,7 +107,7 @@ def group_transactions(transactions):
                     m_transactions.pop(who, None)
         # do something with the rest of m_transactions
         for who in m_transactions.keys():
-            grouped_transactions[month][who] = m_transactions[who]
+            grouped_transactions[month]['NOT GROUPED ' + who] = m_transactions[who]
             m_transactions.pop(who, None)
     # sort transactions according to month
     sorted_transactions = OrderedDict()

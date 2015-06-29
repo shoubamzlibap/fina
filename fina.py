@@ -9,8 +9,12 @@ import sys
 import csv
 import hashlib
 from collections import defaultdict
+from collections import OrderedDict
 import calendar
 import re
+
+# TODO:
+# add csv output
 
 ###
 # Settings
@@ -44,11 +48,11 @@ def parse_input():
                     continue
                 considered_date = 'Valutadatum'
                 year = '20' + row[considered_date][6:]
-                month = calendar.month_name[int(row[considered_date][3:5])]
+                month = row[considered_date][3:5]
                 transaction_key = row['Beguenstigter/Zahlungspflichtiger']
                 if not transaction_key:
                     transaction_key = row['Buchungstext']
-                transactions[month + ' ' + year][transaction_key] += \
+                transactions[year + ' ' + month][transaction_key] += \
                     float(row['Betrag'].replace(',','.'))
     return transactions
 
@@ -59,7 +63,6 @@ def print_transactions(transactions):
 
     transactions: a dict of dicts, containing all transactions
     """
-#TODO: order by Month
     for month,tr in transactions.items():
         print
         print month
@@ -83,7 +86,6 @@ def get_groups(group_file=DEFAULT_GROUP_FILE):
                     transaction_groups[group_name].append(group_re)
     for group_name,group_res in transaction_groups.items():
         transaction_group_res[group_name] = '|'.join(group_res)
-    print transaction_group_res
     return transaction_group_res
 
 
@@ -103,9 +105,20 @@ def group_transactions(transactions):
                     grouped_transactions[month][group_name] += m_transactions[who]
                     m_transactions.pop(who, None)
         # do something with the rest of m_transactions
-    return grouped_transactions
+        for who in m_transactions.keys():
+            grouped_transactions[month][who] = m_transactions[who]
+            m_transactions.pop(who, None)
+    # sort transactions according to month
+    sorted_transactions = OrderedDict()
+    months = [m for m,t in grouped_transactions.items()]
+    months.sort()
+    for month in months:
+        month_named = calendar.month_name[int(month.split()[1])] + ' ' + month.split()[0]
+        sorted_transactions[month_named] = grouped_transactions[month]
+    return sorted_transactions
 
 transactions = parse_input()
 #print_transactions(transactions)
 grouped_transactions = group_transactions(transactions)
 print_transactions(grouped_transactions)
+

@@ -14,7 +14,6 @@ import calendar
 import re
 
 # TODO:
-# check DEFAULT_GROUP_FILE for duplicate entries
 # add csv output
 
 ###
@@ -85,9 +84,35 @@ def get_groups(group_file=DEFAULT_GROUP_FILE):
             for group_name,group_re in row.items():
                 if group_re:
                     transaction_groups[group_name].append(group_re)
+    check_uniquenes(transaction_groups)
     for group_name,group_res in transaction_groups.items():
         transaction_group_res[group_name] = '|'.join(group_res)
     return transaction_group_res
+
+
+def check_uniquenes(transaction_groups):
+    """
+    Check for doubles in transaction_groups.
+
+    transaction_groups: dict of transactions groups
+    """
+    group_members = [i for v in transaction_groups.values() for i in v]
+    num_occurence = defaultdict(int)
+    for member in group_members:
+        num_occurence[member] += 1
+    doubles = [k for k,v in num_occurence.items() if v > 1]
+    if doubles:
+        print 'The following items are not unique in group configuration:'
+        print doubles
+        exit()
+    # now we also check for regex matches
+    for member_re in group_members:
+        for member in group_members:
+            if member_re == member:
+                continue
+            if re.search(member_re, member, re.IGNORECASE):
+                print member + ' is not a unique regular expression, it matches with ' + member_re
+                exit()
 
 
 def group_transactions(transactions):
@@ -119,7 +144,7 @@ def group_transactions(transactions):
     return sorted_transactions
 
 transactions = parse_input()
-#print_transactions(transactions)
 grouped_transactions = group_transactions(transactions)
-print_transactions(grouped_transactions)
+if __name__ == '__main__':
+    print_transactions(grouped_transactions)
 

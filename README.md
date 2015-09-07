@@ -1,6 +1,6 @@
 # fina
-Analyse your private bank account  transactions
+Analyse your private bank account transactions
 
-WORK IN PROGRESS, NOT USABLE YET.
+WORK IN PROGRESS.
 
 This does just very basic sorting of transactions.

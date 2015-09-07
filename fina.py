@@ -5,6 +5,10 @@ Do basic sorting of transactions.
 Author: Isaac Hailperin <isaac.hailperin@gmail.com>
 """
 
+"""
+usage: ./fina.py input files
+"""
+
 import sys
 import csv
 import hashlib
@@ -12,6 +16,8 @@ from collections import defaultdict
 from collections import OrderedDict
 import calendar
 import re
+
+from pprint import pprint
 
 # TODO:
 # add csv output
@@ -47,7 +53,10 @@ def parse_input():
                 else:
                     continue
                 considered_date = 'Valutadatum'
-                year = '20' + row[considered_date][6:]
+                try:
+                    year = '20' + row[considered_date][6:]
+                except KeyError:
+                    continue
                 month = row[considered_date][3:5]
                 transaction_key = row['Beguenstigter/Zahlungspflichtiger']
                 if not transaction_key:
@@ -69,6 +78,57 @@ def print_transactions(transactions):
         print '==========================='
         for key,val in tr.items():
             print key + ' :: ' + str(val)
+
+def print_transactions_as_csv(transactions):
+    """
+    Print all transactions as csv
+
+    Structure:
+    month1,group1,group2, ...,no_group1,nogroup2, ....
+    month2,group1,group2, ...,no_group1,nogroup2, ....
+    [{},{}]
+
+    groups and no_groups should be a uniq list, built from all months, so that 
+    it is easy to see how a certain group evolves over the month
+
+    Also, groups should be sorted according to their overall sum, so that the
+    largest sums are to the left.
+
+    """
+    restructured_transactions = restructure(transactions)
+    sorted_transactions = sort_by_value_and_groups(restructured_transactions)
+    pprint(restructured_transactions)
+
+def sort_by_value_and_groups(transactions):
+    """
+    Sort according to grouped and ungroupped, within these sort by
+    highest overall sum.
+    
+    transactions: output of restructure()
+
+    """
+    pass
+
+
+def restructure(transactions):
+    """
+    Restructure transactions, so that each month every possible positin gets listed,
+    even if its value is zero.
+
+    transactions: ordered dict of transactions
+    """
+    all_months = [tr.items() for month,tr in transactions.items()]
+    all_groups_listed = [[x[0] for x in g] for g in all_months]
+    all_groups = set([item for sublist in all_groups_listed for item in sublist])
+    all_transactions = []
+    for month,tr in transactions.items():
+        months_transactions = {month: {}}
+        for group in all_groups:
+            value = tr.get(group, 0)
+            months_transactions[month][group] = value
+        all_transactions.append(months_transactions)
+    return all_transactions
+
 
 
 def get_groups(group_file=DEFAULT_GROUP_FILE):
@@ -146,5 +206,6 @@ def group_transactions(transactions):
 transactions = parse_input()
 grouped_transactions = group_transactions(transactions)
 if __name__ == '__main__':
-    print_transactions(grouped_transactions)
+    #print_transactions(grouped_transactions)
+    print_transactions_as_csv(grouped_transactions)
 

@@ -96,8 +96,33 @@ def print_transactions_as_csv(transactions):
 
     """
     restructured_transactions = restructure(transactions)
-    sorted_transactions = sort_by_value_and_groups(restructured_transactions)
-    pprint(restructured_transactions)
+    sorted_sums = sort_by_value_and_groups(restructured_transactions)
+    csv_data = combine(restructured_transactions, sorted_sums)
+    field_names = ['Monat'] + [x[0] for x in sorted_sums]
+    out_file = 'Ausgaben.csv'
+    with open(out_file, 'w') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=field_names)
+        writer.writeheader()
+        for row in csv_data:
+            writer.writerow(row)
+    print('Ergebnis wurd in die Datei ' + out_file + ' geschrieben.')
+
+def combine(restructured_transactions, sorted_sums):
+    """
+    Combine restructured_transactions and sorted_sums in way suitable for writing 
+    with a dict writer.
+
+    """
+    csv_data = []
+    for month_tr in restructured_transactions:
+        month = month_tr.keys()[0]
+        transactions = month_tr.values()[0]
+        transactions.update({'Monat': month})
+        csv_data.append(transactions)
+    sums = dict(sorted_sums)
+    sums.update({'Monat':'Summe'})
+    csv_data.append(sums)
+    return csv_data
 
 def sort_by_value_and_groups(transactions):
     """
@@ -107,8 +132,19 @@ def sort_by_value_and_groups(transactions):
     transactions: output of restructure()
 
     """
-    pass
-
+    # calculate overall sums
+    all_groups = transactions[0].values()[0]
+    all_sums = defaultdict(float)
+    for month_tr in transactions:
+        for group,value in month_tr.values()[0].items():
+            all_sums[group] += value
+    # devide by grouped and ungrouped
+    grouped = [ (k,v) for k,v in all_sums.items() if not k.startswith('NOT GROUPED')]
+    ungrouped = [ (k,v) for k,v in all_sums.items() if k.startswith('NOT GROUPED')]
+    # sort
+    grouped.sort(key=lambda x: x[1])
+    ungrouped.sort(key=lambda x: x[1])
+    return grouped + ungrouped
 
 def restructure(transactions):
     """
